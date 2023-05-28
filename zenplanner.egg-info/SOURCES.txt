@@ -1,0 +1,8 @@
+README.md
+setup.py
+tests/__init__.py
+tests/conftest.py
+zenplanner.egg-info/PKG-INFO
+zenplanner.egg-info/SOURCES.txt
+zenplanner.egg-info/dependency_links.txt
+zenplanner.egg-info/top_level.txt
