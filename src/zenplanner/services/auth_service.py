@@ -1,62 +1,35 @@
 import requests
 from zenplanner import config
+from dotenv import load_dotenv
+import os
 
+# load up all entries as environment variables
+load_dotenv()
 class AuthService:
-    def __init__(self, client_id, client_secret):
+    def __init__(self, client_id=None, client_secret=None):
         self.base_url = config.BASE_URL
-        self.client_id = client_id
-        self.client_secret = client_secret
+        self.client_id = client_id or os.getenv("CLIENT_ID")
+        self.client_secret = client_secret or os.getenv("CLIENT_SECRET")
         self._refresh_token = None
 
-    def authenticate(self, scope):
-        auth_url = f"{self.base_url}/auth"
+
+    def authenticate(self):
+        auth_url = f"{self.base_url}/auth/v1/login"
 
         body = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
+            "username": self.client_id,
+            "password": self.client_secret,
             "grant_type": "client_credentials",
-            "scope": scope
+            "requiredRoles": ["PORTAL"],
         }
 
-        response = requests.post(auth_url, json=body)
+        response = requests.post(auth_url, json=body, verify=False)
 
         if response.status_code != 200:
             raise Exception(f"Failed to authenticate: {response.content}")
 
         data = response.json()
+        print(data)
+        self.refresh_token = data['refreshToken']
 
-        self.refresh_token = data['refresh_token']
-
-        return data['access_token'], data['expires']
-
-    @property
-    def refresh_token(self):
-        return self._refresh_token
-
-    @refresh_token.setter
-    def refresh_token(self, value):
-        self._refresh_token = value 
-    
-    def refresh_auth_token(self):
-        if not self._refresh_token:
-            raise Exception("No refresh token found")
-
-        auth_url = f"{self.base_url}/auth"
-
-        body = {
-            "client_id": self.client_id,
-            "grant_type": "refresh_token",
-            "refresh_token": self._refresh_token
-        }
-
-        response = requests.post(auth_url, json=body)
-
-        if response.status_code != 200:
-            raise Exception(f"Failed to refresh token: {response.content}")
-
-        data = response.json()
-
-        self._refresh_token = data['refresh_token']
-
-        return data['access_token'], data['expires']
-
+        return data['token'], data['lockoutDate']
